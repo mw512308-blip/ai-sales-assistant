@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Peshawari Chappal",
+    "price": 3500,
+    "stock": 15,
+    "description": "Handmade pure leather traditional Peshawari chappal."
+  },
+  {
+    "id": 2,
+    "name": "Kabal Wool Shawl",
+    "price": 5000,
+    "stock": 8,
+    "description": "Original warm wool shawl for winter."
+  },
+  {
+    "id": 3,
+    "name": "Ajrak Kurta",
+    "price": 2200,
+    "stock": 20,
+    "description": "Soft cotton Ajrak printed kurta."
+  }
+]
