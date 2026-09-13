@@ -4,30 +4,66 @@ import json
 from gtts import gTTS
 import io
 
-# 1. Page Configuration
-st.set_page_config(page_title="AI Sales Assistant", page_icon="🛍️")
-st.title("🛍️ AI Sales Assistant")
+# 1. Page Config
+st.set_page_config(page_title="AI Sales Assistant", page_icon="🛍️", layout="centered")
 
-# 2. Main Screen Always-Visible Action Buttons
+# 2. Advanced Mobile Layout CSS
+st.markdown("""
+    <style>
+    /* Hide top padding & header menu */
+    [data-testid="stHeader"] {display: none;}
+    .block-container {padding-top: 1rem; padding-bottom: 2rem;}
+    footer {display: none;}
+    
+    /* Clean Compact Title */
+    .app-title {
+        text-align: center;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #FFFFFF;
+        margin-bottom: 15px;
+    }
+    
+    /* Custom Responsive Native-looking Buttons */
+    .btn-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .custom-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+        color: white !important;
+        text-decoration: none !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .wa-bg { background-color: #25D366; }
+    .fb-bg { background-color: #1877F2; }
+    </style>
+""", unsafe_allow_html=True)
+
+# Main Header
+st.markdown("<div class='app-title'>🛍️ AI Sales Assistant</div>", unsafe_allow_html=True)
+
+# Side-by-Side Action Buttons
 whatsapp_num = "923183705066"
 wa_url = f"https://wa.me/{whatsapp_num}?text=Hello,%20I%20want%20to%20place%20an%20order."
-fb_url = "https://facebook.com"  # اپنا فیس بک پیج URL یہاں درج کریں
+fb_url = "https://facebook.com"
 
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown(
-        f'<a href="{wa_url}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; padding:10px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">💬 WhatsApp Chat</button></a>',
-        unsafe_allow_html=True
-    )
-with col2:
-    st.markdown(
-        f'<a href="{fb_url}" target="_blank"><button style="width:100%; background-color:#1877F2; color:white; padding:10px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">🌐 Facebook Page</button></a>',
-        unsafe_allow_html=True
-    )
+st.markdown(f"""
+    <div class='btn-container'>
+        <a href='{wa_url}' target='_blank' class='custom-btn wa-bg'>💬 WhatsApp</a>
+        <a href='{fb_url}' target='_blank' class='custom-btn fb-bg'>🌐 Facebook</a>
+    </div>
+""", unsafe_allow_html=True)
 
-st.write("---")
+st.divider()
 
-# 3. Setup Gemini API
+# Setup Gemini API & Logic
 api_key = st.secrets.get("GEMINI_API_KEY")
 if not api_key:
     st.error("API Key missing in Secrets!")
@@ -35,27 +71,15 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# 4. Load Products Data
 try:
     with open("products.json", "r", encoding="utf-8") as f:
         products = json.load(f)
-except Exception as e:
+except Exception:
     products = []
 
-# System Prompt
-system_prompt = f"""
-You are a helpful sales assistant.
-Available products inventory: {json.dumps(products)}
-WhatsApp Contact: 03183705066
-Respond in English, Urdu, or Pashto based on customer input.
-"""
+system_prompt = f"You are a sales assistant. Inventory: {json.dumps(products)}. WhatsApp: 03183705066"
+model = genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=system_prompt)
 
-model = genai.GenerativeModel(
-    model_name="gemini-3.6-flash",
-    system_instruction=system_prompt
-)
-
-# 5. Text-to-Speech Helper Function
 def play_audio(text):
     try:
         tts = gTTS(text=text, lang='ur')
@@ -65,27 +89,18 @@ def play_audio(text):
     except Exception:
         pass
 
-# 6. Chat Memory Initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Past Messages
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# 7. Inputs (Text & Voice)
+voice_input = st.audio_input("🎤 Voice Question / بول کر سوال پوچھیں")
 user_text = st.chat_input("Sawal poochein / Ask a question...")
-voice_input = st.audio_input("🎤 Record your voice / بول کر سوال پوچھیں")
 
-prompt_to_send = None
+prompt_to_send = user_text if user_text else ("Voice message received." if voice_input else None)
 
-if user_text:
-    prompt_to_send = user_text
-elif voice_input:
-    prompt_to_send = "Voice message received."
-
-# 8. Process Input with Error Handling
 if prompt_to_send:
     st.session_state.messages.append({"role": "user", "content": prompt_to_send})
     with st.chat_message("user"):
@@ -95,12 +110,16 @@ if prompt_to_send:
         try:
             response = model.generate_content(prompt_to_send)
             bot_reply = response.text
-        except Exception as e:
+        except Exception:
             bot_reply = "معذرت! اس وقت سسٹم پر بوجھ زیادہ ہے۔ براہ کرم 1 منٹ بعد دوبارہ کوشش کریں۔"
             
         st.write(bot_reply)
         
-        # Play AI response as audio
+        for product in products:
+            if product.get("name", "").lower() in bot_reply.lower() or product.get("name", "").lower() in prompt_to_send.lower():
+                if "image" in product:
+                    st.image(product["image"], caption=f"{product['name']} - Rs. {product['price']}", width=250)
+        
         play_audio(bot_reply)
         
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
