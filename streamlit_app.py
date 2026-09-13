@@ -4,69 +4,76 @@ import json
 from gtts import gTTS
 import io
 
-# 1. Page Config
-st.set_page_config(page_title="AI Sales Assistant", page_icon="🛍️", layout="centered")
+# 1. Page Config & Force Dark Theme
+st.set_page_config(page_title="AI Sales Assistant", page_icon="🛍️", layout="centered", initial_sidebar_state="collapsed")
 
-# 2. Advanced Mobile Layout CSS
+# 2. Strict CSS Injection for Dark Mode & Styling
 st.markdown("""
     <style>
-    /* Hide top padding & header menu */
+    html, body, [data-testid="stAppViewContainer"], .stApp {
+        background-color: #0f172a !important;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%) !important;
+        color: #ffffff !important;
+    }
+    
     [data-testid="stHeader"] {display: none;}
-    .block-container {padding-top: 1rem; padding-bottom: 2rem;}
     footer {display: none;}
-    
-    /* Clean Compact Title */
+
+    .header-box {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 18px;
+        text-align: center;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+    }
+
     .app-title {
-        text-align: center;
-        font-size: 1.6rem;
+        font-size: 1.8rem;
         font-weight: 800;
-        color: #FFFFFF;
-        margin-bottom: 15px;
+        color: #38bdf8;
+        margin-bottom: 4px;
     }
-    
-    /* Custom Responsive Native-looking Buttons */
-    .btn-container {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
+
+    .status-tag {
+        font-size: 0.85rem;
+        color: #4ade80;
+        font-weight: 600;
     }
-    .custom-btn {
-        flex: 1;
-        padding: 10px;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 14px;
-        color: white !important;
-        text-decoration: none !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+
+    p, span, label, div {
+        color: #f1f5f9 !important;
     }
-    .wa-bg { background-color: #25D366; }
-    .fb-bg { background-color: #1877F2; }
     </style>
 """, unsafe_allow_html=True)
 
-# Main Header
-st.markdown("<div class='app-title'>🛍️ AI Sales Assistant</div>", unsafe_allow_html=True)
+# Main Header Card
+st.markdown("""
+    <div class='header-box'>
+        <div class='app-title'>🛍️ AI Sales Assistant</div>
+        <div class='status-tag'>🟢 Online | Always Ready</div>
+    </div>
+""", unsafe_allow_html=True)
 
-# Side-by-Side Action Buttons
+# WhatsApp & Facebook Action Buttons
 whatsapp_num = "923183705066"
 wa_url = f"https://wa.me/{whatsapp_num}?text=Hello,%20I%20want%20to%20place%20an%20order."
 fb_url = "https://facebook.com"
 
-st.markdown(f"""
-    <div class='btn-container'>
-        <a href='{wa_url}' target='_blank' class='custom-btn wa-bg'>💬 WhatsApp</a>
-        <a href='{fb_url}' target='_blank' class='custom-btn fb-bg'>🌐 Facebook</a>
-    </div>
-""", unsafe_allow_html=True)
+col1, col2 = st.columns(2)
+with col1:
+    st.link_button("💬 WhatsApp", wa_url, use_container_width=True, type="primary")
+with col2:
+    st.link_button("🌐 Facebook", fb_url, use_container_width=True, type="secondary")
 
 st.divider()
 
-# Setup Gemini API & Logic
+# Robust Gemini AI Initialization
 api_key = st.secrets.get("GEMINI_API_KEY")
+
 if not api_key:
-    st.error("API Key missing in Secrets!")
+    st.error("⚠️ API Key Secret میں موجود نہیں ہے۔")
     st.stop()
 
 genai.configure(api_key=api_key)
@@ -77,8 +84,13 @@ try:
 except Exception:
     products = []
 
-system_prompt = f"You are a sales assistant. Inventory: {json.dumps(products)}. WhatsApp: 03183705066"
-model = genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=system_prompt)
+system_prompt = f"You are an expert AI Sales Assistant for a store in Pakistan. Respond politely in Pashto, Roman Urdu, or English. Product inventory: {json.dumps(products)}. Store WhatsApp: 03183705066"
+
+# Model selection using correct standard models
+try:
+    model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=system_prompt)
+except Exception:
+    model = genai.GenerativeModel(model_name="gemini-pro", system_instruction=system_prompt)
 
 def play_audio(text):
     try:
@@ -96,7 +108,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-voice_input = st.audio_input("🎤 Voice Question / بول کر سوال پوچھیں")
+voice_input = st.audio_input("🎤 Record Voice / آواز سے سوال کریں")
 user_text = st.chat_input("Sawal poochein / Ask a question...")
 
 prompt_to_send = user_text if user_text else ("Voice message received." if voice_input else None)
@@ -110,8 +122,8 @@ if prompt_to_send:
         try:
             response = model.generate_content(prompt_to_send)
             bot_reply = response.text
-        except Exception:
-            bot_reply = "معذرت! اس وقت سسٹم پر بوجھ زیادہ ہے۔ براہ کرم 1 منٹ بعد دوبارہ کوشش کریں۔"
+        except Exception as e:
+            bot_reply = f"معذرت! API سے رابطہ میں مسئلہ آ رہا ہے: {str(e)}"
             
         st.write(bot_reply)
         
