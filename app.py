@@ -1,8 +1,8 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 import json
 
-# Try loading gTTS safely so app never crashes
+# Safely handle gTTS
 try:
     from gTTS import gTTS
     import io
@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Force White Light Theme Style
+# 2. Strict Light Mode Styling
 st.markdown("""
     <style>
     html, body, [data-testid="stAppViewContainer"], .stApp {
@@ -71,16 +71,19 @@ st.link_button("💬 Chat on WhatsApp", wa_url, use_container_width=True, type="
 
 st.divider()
 
-# Secrets & Gemini Setup
+# Get Key & Setup Client
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
     st.error("⚠️ Secrets میں GEMINI_API_KEY موجود نہیں ہے۔")
     st.stop()
 
-# Clean key format
 api_key = str(api_key).strip().replace('"', '').replace("'", "")
-genai.configure(api_key=api_key)
+
+try:
+    client = genai.Client(api_key=api_key)
+except Exception as e:
+    st.error(f"API Client Setup Error: {e}")
 
 try:
     with open("products.json", "r", encoding="utf-8") as f:
@@ -90,15 +93,17 @@ except Exception:
 
 system_prompt = f"You are an expert AI Sales Assistant for a store in Pakistan. Respond politely in Pashto, Roman Urdu, or English. Product inventory: {json.dumps(products)}. Store WhatsApp: 03183705066"
 
+# New Google GenAI SDK Method
 def get_response(user_input):
-    models_to_try = ["models/gemini-1.5-flash", "models/gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"]
+    models_to_try = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]
     for model_name in models_to_try:
         try:
-            model = genai.GenerativeModel(model_name=model_name)
-            full_prompt = f"{system_prompt}\n\nUser Question: {user_input}"
-            res = model.generate_content(full_prompt)
-            if res.text:
-                return res.text
+            response = client.models.generate_content(
+                model=model_name,
+                contents=f"{system_prompt}\n\nUser Question: {user_input}"
+            )
+            if response.text:
+                return response.text
         except Exception:
             continue
     return "معذرت! اس وقت رابطہ قائم نہیں ہو پا رہا۔ براہ کرم تھوڑی دیر بعد کوشش کریں۔"
@@ -136,7 +141,7 @@ if prompt_to_send:
         bot_reply = get_response(prompt_to_send)
         st.write(bot_reply)
         
-        # Product Image Logic
+        # Display product image if found
         for product in products:
             if product.get("name", "").lower() in bot_reply.lower() or product.get("name", "").lower() in prompt_to_send.lower():
                 if "image" in product:
