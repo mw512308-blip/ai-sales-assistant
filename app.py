@@ -5,48 +5,75 @@ from gtts import gTTS
 import io
 
 # 1. Page Config
-st.set_page_config(page_title="AI Sales Assistant", page_icon="🛍️", layout="centered")
+st.set_page_config(
+    page_title="AI Sales Assistant", 
+    page_icon="🛍️", 
+    layout="centered", 
+    initial_sidebar_state="collapsed"
+)
 
-# 2. Premium Dark Gradient UI & Custom Styling
+# 2. Hardcoded High-Priority White Theme CSS
 st.markdown("""
     <style>
-    [data-testid="stHeader"] {display: none;}
-    .block-container {padding-top: 1.5rem; padding-bottom: 2rem;}
-    footer {display: none;}
+    /* Global Background & Text Control */
+    html, body, [data-testid="stAppViewContainer"], .stApp, section[data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        color: #1e293b !important;
+    }
     
-    .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-        color: #f8fafc;
+    /* Force Light Mode Color Scheme */
+    :root {
+        color-scheme: light !important;
+    }
+
+    [data-testid="stHeader"] {display: none;}
+    footer {display: none;}
+
+    /* All Text Force Dark Color */
+    p, span, label, div, h1, h2, h3, h4, h5, h6, .stMarkdown, [data-testid="stChatMessage"] {
+        color: #0f172a !important;
+    }
+
+    /* Input Fields Fix */
+    input, textarea {
+        color: #000000 !important;
+        background-color: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    /* Message Bubbles Styling */
+    [data-testid="stChatMessage"] {
+        background-color: #f1f5f9 !important;
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0 !important;
+        margin-bottom: 8px !important;
     }
 
     .header-box {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 20px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
         text-align: center;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        margin-bottom: 15px;
     }
 
     .app-title {
         font-size: 1.8rem;
         font-weight: 800;
-        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 6px;
+        color: #0284c7 !important;
+        margin-bottom: 4px;
     }
 
     .status-tag {
         font-size: 0.85rem;
-        color: #4ade80;
+        color: #16a34a !important;
         font-weight: 600;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Main Header Card
+# Main Header
 st.markdown("""
     <div class='header-box'>
         <div class='app-title'>🛍️ AI Sales Assistant</div>
@@ -54,23 +81,18 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# WhatsApp & Facebook Side-by-Side Action Buttons
+# WhatsApp Integration
 whatsapp_num = "923183705066"
 wa_url = f"https://wa.me/{whatsapp_num}?text=Hello,%20I%20want%20to%20place%20an%20order."
-fb_url = "https://facebook.com"
-
-col1, col2 = st.columns(2)
-with col1:
-    st.link_button("💬 WhatsApp", wa_url, use_container_width=True, type="primary")
-with col2:
-    st.link_button("🌐 Facebook", fb_url, use_container_width=True, type="secondary")
+st.link_button("💬 Chat on WhatsApp", wa_url, use_container_width=True, type="primary")
 
 st.divider()
 
-# Backend AI Logic & Secrets Integration
+# Secrets & Gemini Setup
 api_key = st.secrets.get("GEMINI_API_KEY")
+
 if not api_key:
-    st.error("API Key missing in Secrets!")
+    st.error("⚠️ Secrets میں GEMINI_API_KEY موجود نہیں ہے۔")
     st.stop()
 
 genai.configure(api_key=api_key)
@@ -81,8 +103,21 @@ try:
 except Exception:
     products = []
 
-system_prompt = f"You are an expert sales assistant. Inventory: {json.dumps(products)}. WhatsApp: 03183705066"
-model = genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=system_prompt)
+system_prompt = f"You are an expert AI Sales Assistant for a store in Pakistan. Respond politely in Pashto, Roman Urdu, or English. Product inventory: {json.dumps(products)}. Store WhatsApp: 03183705066"
+
+# Robust Fallback Mechanism for API
+def get_response(user_input):
+    models_to_try = ["gemini-1.5-flash", "gemini-pro"]
+    for model_name in models_to_try:
+        try:
+            model = genai.GenerativeModel(model_name=model_name)
+            full_prompt = f"{system_prompt}\n\nUser Question: {user_input}"
+            res = model.generate_content(full_prompt)
+            if res.text:
+                return res.text
+        except Exception:
+            continue
+    return "معذرت! اس وقت رابطہ قائم نہیں ہو پا رہا۔ براہ کرم تھوڑی دیر بعد کوشش کریں۔"
 
 def play_audio(text):
     try:
@@ -93,6 +128,7 @@ def play_audio(text):
     except Exception:
         pass
 
+# Chat History Setup
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -100,6 +136,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
+# User Inputs
 voice_input = st.audio_input("🎤 Record Voice / آواز سے سوال کریں")
 user_text = st.chat_input("Sawal poochein / Ask a question...")
 
@@ -111,12 +148,7 @@ if prompt_to_send:
         st.write(prompt_to_send)
 
     with st.chat_message("assistant"):
-        try:
-            response = model.generate_content(prompt_to_send)
-            bot_reply = response.text
-        except Exception:
-            bot_reply = "معذرت! اس وقت سسٹم پر بوجھ زیادہ ہے۔ براہ کرم 1 منٹ بعد دوبارہ کوشش کریں۔"
-            
+        bot_reply = get_response(prompt_to_send)
         st.write(bot_reply)
         
         for product in products:
