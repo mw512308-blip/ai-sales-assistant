@@ -2,7 +2,15 @@ import streamlit as st
 import google.generativeai as genai
 import json
 
-# Page Config
+# Try loading gTTS safely so app never crashes
+try:
+    from gTTS import gTTS
+    import io
+    gtts_available = True
+except Exception:
+    gtts_available = False
+
+# 1. Page Config
 st.set_page_config(
     page_title="AI Sales Assistant", 
     page_icon="🛍️", 
@@ -10,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Light Mode Styling
+# 2. Force White Light Theme Style
 st.markdown("""
     <style>
     html, body, [data-testid="stAppViewContainer"], .stApp {
@@ -56,20 +64,21 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# WhatsApp Button
+# WhatsApp Integration Button
 whatsapp_num = "923183705066"
 wa_url = f"https://wa.me/{whatsapp_num}?text=Hello,%20I%20want%20to%20place%20an%20order."
 st.link_button("💬 Chat on WhatsApp", wa_url, use_container_width=True, type="primary")
 
 st.divider()
 
-# Secrets & API Setup
+# Secrets & Gemini Setup
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
     st.error("⚠️ Secrets میں GEMINI_API_KEY موجود نہیں ہے۔")
     st.stop()
 
+# Clean key format
 api_key = str(api_key).strip().replace('"', '').replace("'", "")
 genai.configure(api_key=api_key)
 
@@ -94,6 +103,16 @@ def get_response(user_input):
             continue
     return "معذرت! اس وقت رابطہ قائم نہیں ہو پا رہا۔ براہ کرم تھوڑی دیر بعد کوشش کریں۔"
 
+def play_audio(text):
+    if gtts_available:
+        try:
+            tts = gTTS(text=text, lang='ur')
+            fp = io.BytesIO()
+            tts.write_to_fp(fp)
+            st.audio(fp, format='audio/mp3')
+        except Exception:
+            pass
+
 # Chat History Setup
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -102,21 +121,27 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# User Input
+# Voice & Text Inputs
+voice_input = st.audio_input("🎤 Record Voice / آواز سے سوال کریں")
 user_text = st.chat_input("Sawal poochein / Ask a question...")
 
-if user_text:
-    st.session_state.messages.append({"role": "user", "content": user_text})
+prompt_to_send = user_text if user_text else ("Voice message received." if voice_input else None)
+
+if prompt_to_send:
+    st.session_state.messages.append({"role": "user", "content": prompt_to_send})
     with st.chat_message("user"):
-        st.write(user_text)
+        st.write(prompt_to_send)
 
     with st.chat_message("assistant"):
-        bot_reply = get_response(user_text)
+        bot_reply = get_response(prompt_to_send)
         st.write(bot_reply)
         
+        # Product Image Logic
         for product in products:
-            if product.get("name", "").lower() in bot_reply.lower() or product.get("name", "").lower() in user_text.lower():
+            if product.get("name", "").lower() in bot_reply.lower() or product.get("name", "").lower() in prompt_to_send.lower():
                 if "image" in product:
                     st.image(product["image"], caption=f"{product['name']} - Rs. {product['price']}", width=250)
+        
+        play_audio(bot_reply)
         
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
