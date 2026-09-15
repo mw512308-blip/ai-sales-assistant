@@ -1,8 +1,8 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai
 import json
 
-# Safely handle gTTS
+# Safe gTTS Import
 try:
     from gTTS import gTTS
     import io
@@ -10,7 +10,7 @@ try:
 except Exception:
     gtts_available = False
 
-# 1. Page Config
+# Page Config
 st.set_page_config(
     page_title="AI Sales Assistant", 
     page_icon="🛍️", 
@@ -18,7 +18,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Strict Light Mode Styling
+# Light Theme Injection
 st.markdown("""
     <style>
     html, body, [data-testid="stAppViewContainer"], .stApp {
@@ -64,26 +64,23 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# WhatsApp Integration Button
+# WhatsApp Button
 whatsapp_num = "923183705066"
 wa_url = f"https://wa.me/{whatsapp_num}?text=Hello,%20I%20want%20to%20place%20an%20order."
 st.link_button("💬 Chat on WhatsApp", wa_url, use_container_width=True, type="primary")
 
 st.divider()
 
-# Get Key & Setup Client
+# Get Secrets
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
     st.error("⚠️ Secrets میں GEMINI_API_KEY موجود نہیں ہے۔")
     st.stop()
 
+# Clean raw key
 api_key = str(api_key).strip().replace('"', '').replace("'", "")
-
-try:
-    client = genai.Client(api_key=api_key)
-except Exception as e:
-    st.error(f"API Client Setup Error: {e}")
+genai.configure(api_key=api_key)
 
 try:
     with open("products.json", "r", encoding="utf-8") as f:
@@ -93,19 +90,29 @@ except Exception:
 
 system_prompt = f"You are an expert AI Sales Assistant for a store in Pakistan. Respond politely in Pashto, Roman Urdu, or English. Product inventory: {json.dumps(products)}. Store WhatsApp: 03183705066"
 
-# New Google GenAI SDK Method
+# Dynamic Model Engine
 def get_response(user_input):
-    models_to_try = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]
+    models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+    
     for model_name in models_to_try:
         try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=f"{system_prompt}\n\nUser Question: {user_input}"
+            model = genai.GenerativeModel(
+                model_name=model_name,
+                system_instruction=system_prompt
             )
-            if response.text:
-                return response.text
+            res = model.generate_content(user_input)
+            if res and res.text:
+                return res.text
         except Exception:
-            continue
+            try:
+                # Fallback format without system instruction argument
+                model = genai.GenerativeModel(model_name=model_name)
+                res = model.generate_content(f"{system_prompt}\n\nUser Question: {user_input}")
+                if res and res.text:
+                    return res.text
+            except Exception:
+                continue
+                
     return "معذرت! اس وقت رابطہ قائم نہیں ہو پا رہا۔ براہ کرم تھوڑی دیر بعد کوشش کریں۔"
 
 def play_audio(text):
@@ -118,7 +125,7 @@ def play_audio(text):
         except Exception:
             pass
 
-# Chat History Setup
+# Session State & History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -126,7 +133,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# Voice & Text Inputs
+# User Controls
 voice_input = st.audio_input("🎤 Record Voice / آواز سے سوال کریں")
 user_text = st.chat_input("Sawal poochein / Ask a question...")
 
@@ -141,7 +148,7 @@ if prompt_to_send:
         bot_reply = get_response(prompt_to_send)
         st.write(bot_reply)
         
-        # Display product image if found
+        # Product Image display logic
         for product in products:
             if product.get("name", "").lower() in bot_reply.lower() or product.get("name", "").lower() in prompt_to_send.lower():
                 if "image" in product:
