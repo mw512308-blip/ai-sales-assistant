@@ -3,70 +3,67 @@ from google import genai
 from gtts import gTTS
 import io
 
-# Page Config (Centered view for mobile card look)
+# Page Config
 st.set_page_config(page_title="AI Sales Assistant", page_icon="🤖", layout="centered")
 
 # Gemini API Initialization
 GEMINI_API_KEY = "AQ.Ab8RN6K9JidgLgRtBansOlTim0qbCUN9bu_rC5E1r4dkRiz7iQ"
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# Custom High-End Mobile Glassmorphism CSS
+# Pure Dark Glassmorphism CSS (Mobile Optimized)
 st.markdown("""
 <style>
-    /* Dark Aesthetic Background */
-    .stApp {
-        background: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #080b11 100%);
-        color: #ffffff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-    
-    /* Hide Default Headers */
-    header, footer {visibility: hidden;}
-    .block-container {
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 480px !important;
+    /* Force Pure Dark Background for Entire App */
+    html, body, [data-testid="stAppViewContainer"], .stApp {
+        background-color: #0b0f17 !important;
+        background: linear-gradient(180deg, #0b0f17 0%, #05070a 100%) !important;
+        color: #ffffff !important;
     }
 
-    /* Main Title */
+    /* Hide Top Header & Streamlit Elements */
+    header, footer, #MainMenu {visibility: hidden !important;}
+    
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 5rem !important;
+        max-width: 450px !important;
+    }
+
+    /* Header Text */
     .app-title {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 700;
         color: #ffffff;
-        letter-spacing: -0.5px;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
     }
     .status-badge {
         color: #22c55e;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
     }
 
     /* Badges Layout */
     .badge-grid {
         display: flex;
-        gap: 8px;
-        margin-bottom: 25px;
+        gap: 6px;
+        margin-bottom: 20px;
     }
     .badge-item {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 8px 12px;
-        font-size: 12px;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-size: 11px;
         color: #9ca3af;
-        backdrop-filter: blur(12px);
-        display: flex;
-        align-items: center;
-        gap: 5px;
+        backdrop-filter: blur(10px);
     }
 
-    /* Custom Social Buttons */
+    /* Social Buttons */
     .btn-container {
         display: flex;
-        gap: 12px;
-        margin-bottom: 25px;
+        gap: 10px;
+        margin-bottom: 20px;
     }
     .social-btn {
         flex: 1;
@@ -74,53 +71,48 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         gap: 8px;
-        padding: 12px;
-        border-radius: 20px;
+        padding: 10px;
+        border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(255, 255, 255, 0.06);
-        color: white;
+        background: rgba(255, 255, 255, 0.05);
+        color: white !important;
         text-decoration: none;
-        font-weight: 500;
-        font-size: 14px;
-        backdrop-filter: blur(16px);
-        transition: all 0.2s ease;
-    }
-    .social-btn:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.25);
+        font-size: 13px;
+        backdrop-filter: blur(10px);
     }
 
-    /* Voice Recording Glass Box */
+    /* Voice Card */
     .voice-card {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(212, 175, 55, 0.3);
-        border-radius: 24px;
-        padding: 16px 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        border-radius: 20px;
+        padding: 14px 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 20px;
-        backdrop-filter: blur(20px);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-    .mic-icon-circle {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: rgba(212, 175, 55, 0.15);
-        border: 1px solid rgba(212, 175, 55, 0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        margin-bottom: 15px;
     }
 
-    /* Custom Input Box Styling */
-    .stChatInput > div {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 30px !important;
-        backdrop-filter: blur(20px) !important;
+    /* FIX STREAMLIT BOTTOM CHAT INPUT (Dark Glass Theme) */
+    [data-testid="stBottom"], [data-testid="stChatInput"] {
+        background-color: transparent !important;
+        background: transparent !important;
     }
+    
+    [data-testid="stChatInput"] > div {
+        background: rgba(255, 255, 255, 0.06) !important;
+        border: 1px solid rgba(212, 175, 55, 0.4) !important;
+        border-radius: 25px !important;
+        backdrop-filter: blur(15px) !important;
+        color: white !important;
+    }
+    
+    [data-testid="stChatInput"] textarea {
+        color: white !important;
+    }
+    
+    /* Hide manage app button space */
+    .viewerBadge_container__1S12D {display: none !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -149,21 +141,21 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Voice Recording UI Box
+# Voice Recording Box
 st.markdown("""
 <div class="voice-card">
-    <div style="display: flex; align-items: center; gap: 14px;">
-        <div class="mic-icon-circle">🎙️</div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); display: flex; align-items: center; justify-content: center;">🎙️</div>
         <div>
-            <div style="font-weight: 600; font-size: 14px; color: #fff;">آواز سے سوال کریں / Record Voice</div>
-            <div style="font-size: 12px; color: #9ca3af;">Tap to start speaking</div>
+            <div style="font-weight: 600; font-size: 13px; color: #fff;">آواز سے سوال کریں / Record Voice</div>
+            <div style="font-size: 11px; color: #9ca3af;">Tap to start speaking</div>
         </div>
     </div>
-    <div style="font-size: 13px; color: #9ca3af; font-family: monospace;">00:00</div>
+    <div style="font-size: 12px; color: #9ca3af; font-family: monospace;">00:00</div>
 </div>
 """, unsafe_allow_html=True)
 
-# Chat Messages Display
+# Chat Messages History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -171,7 +163,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-# Chat Input & Logic
+# Chat Input & Gemini Logic
 if prompt := st.chat_input("Sawal poochein / Ask a question..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
