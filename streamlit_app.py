@@ -10,51 +10,51 @@ st.set_page_config(page_title="AI Sales Assistant", page_icon="🤖", layout="ce
 GEMINI_API_KEY = "AQ.Ab8RN6K9JidgLgRtBansOlTim0qbCUN9bu_rC5E1r4dkRiz7iQ"
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# Pure Dark Glassmorphism CSS (Mobile Optimized)
+# Exact Mobile Glassmorphism Theme CSS
 st.markdown("""
 <style>
-    /* Force Pure Dark Background for Entire App */
+    /* Dark Aesthetic Background */
     html, body, [data-testid="stAppViewContainer"], .stApp {
         background-color: #0b0f17 !important;
-        background: linear-gradient(180deg, #0b0f17 0%, #05070a 100%) !important;
+        background: linear-gradient(180deg, #0f141c 0%, #080a0f 100%) !important;
         color: #ffffff !important;
     }
 
-    /* Hide Top Header & Streamlit Elements */
+    /* Hide Top Header & Streamlit Padding */
     header, footer, #MainMenu {visibility: hidden !important;}
     
     .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 5rem !important;
-        max-width: 450px !important;
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 420px !important;
     }
 
     /* Header Text */
     .app-title {
-        font-size: 26px;
+        font-size: 28px;
         font-weight: 700;
         color: #ffffff;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
     .status-badge {
         color: #22c55e;
         font-size: 13px;
         font-weight: 500;
-        margin-bottom: 18px;
+        margin-bottom: 22px;
     }
 
     /* Badges Layout */
     .badge-grid {
         display: flex;
-        gap: 6px;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-bottom: 22px;
     }
     .badge-item {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 6px 10px;
-        font-size: 11px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 12px;
         color: #9ca3af;
         backdrop-filter: blur(10px);
     }
@@ -62,8 +62,8 @@ st.markdown("""
     /* Social Buttons */
     .btn-container {
         display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
+        gap: 12px;
+        margin-bottom: 22px;
     }
     .social-btn {
         flex: 1;
@@ -71,48 +71,49 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         gap: 8px;
-        padding: 10px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         background: rgba(255, 255, 255, 0.05);
         color: white !important;
         text-decoration: none;
-        font-size: 13px;
+        font-size: 14px;
+        font-weight: 500;
         backdrop-filter: blur(10px);
     }
 
-    /* Voice Card */
+    /* Voice Recording Box */
     .voice-card {
         background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(212, 175, 55, 0.35);
-        border-radius: 20px;
-        padding: 14px 16px;
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 24px;
+        padding: 14px 18px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 15px;
+        margin-bottom: 25px;
     }
 
-    /* FIX STREAMLIT BOTTOM CHAT INPUT (Dark Glass Theme) */
-    [data-testid="stBottom"], [data-testid="stChatInput"] {
-        background-color: transparent !important;
-        background: transparent !important;
-    }
-    
-    [data-testid="stChatInput"] > div {
-        background: rgba(255, 255, 255, 0.06) !important;
+    /* Streamlit Input Fixes */
+    .stTextInput > div > div {
+        background: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(212, 175, 55, 0.4) !important;
         border-radius: 25px !important;
-        backdrop-filter: blur(15px) !important;
         color: white !important;
     }
     
-    [data-testid="stChatInput"] textarea {
+    .stTextInput input {
         color: white !important;
     }
     
-    /* Hide manage app button space */
-    .viewerBadge_container__1S12D {display: none !important;}
+    .stButton button {
+        background: rgba(212, 175, 55, 0.2) !important;
+        border: 1px solid rgba(212, 175, 55, 0.5) !important;
+        color: white !important;
+        border-radius: 50% !important;
+        height: 42px !important;
+        width: 42px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -145,7 +146,7 @@ st.markdown("""
 st.markdown("""
 <div class="voice-card">
     <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); display: flex; align-items: center; justify-content: center;">🎙️</div>
+        <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); display: flex; align-items: center; justify-content: center;">🎙️</div>
         <div>
             <div style="font-weight: 600; font-size: 13px; color: #fff;">آواز سے سوال کریں / Record Voice</div>
             <div style="font-size: 11px; color: #9ca3af;">Tap to start speaking</div>
@@ -155,7 +156,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Chat Messages History
+# Chat Form (Inside Dark Container)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -163,27 +164,30 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-# Chat Input & Gemini Logic
-if prompt := st.chat_input("Sawal poochein / Ask a question..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.write(prompt)
+with st.form(key="chat_form", clear_on_submit=True):
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        user_input = st.text_input("", placeholder="Sawal poochein / Ask a question...", label_visibility="collapsed")
+    with col2:
+        submit = st.form_submit_button("➔")
 
-    with st.chat_message("assistant"):
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-            )
-            reply = response.text
-            st.write(reply)
+if submit and user_input:
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_input,
+        )
+        reply = response.text
+        st.session_state.messages.append({"role": "assistant", "content": reply})
 
-            # Audio output
-            tts = gTTS(text=reply, lang='ur')
-            fp = io.BytesIO()
-            tts.write_to_fp(fp)
-            st.audio(fp, format='audio/mp3')
+        # Voice Audio Generation
+        tts = gTTS(text=reply, lang='ur')
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        st.audio(fp, format='audio/mp3')
 
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-        except Exception as e:
-            st.error(f"Error: {e}")
+        st.rerun()
+    except Exception as e:
+        st.error(f"Error: {e}")
